@@ -182,14 +182,14 @@
             font-size: 1.05rem;
         }
 
-        /* Engineering Service Layout Grid matching desktop visual spacing */
+        /* Engineering Service Layout Grid */
         .services-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 24px;
         }
 
-        /* Desktop View responsive fix if resolution breaks */
+        /* Desktop View responsive fixes */
         @media (max-width: 900px) {
             .services-grid { grid-template-columns: repeat(2, 1fr); }
             header { padding: 1.5rem 2rem; }
@@ -252,7 +252,7 @@
             color: #1e1b4b;
         }
 
-        /* Desktop Footer Panel styling from Image 13281561644219758633.png */
+        /* Desktop Footer Panel styling */
         footer {
             background: linear-gradient(135deg, #2c1654 0%, #170d30 100%);
             color: rgba(255,255,255,0.8);
@@ -356,14 +356,12 @@
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* SVG Vector Image for crisp look on high-res displays */
         .whatsapp-icon-bg svg {
             width: 32px;
             height: 32px;
             fill: white;
         }
 
-        /* Hover animations */
         .whatsapp-widget:hover .whatsapp-icon-bg {
             transform: scale(1.1);
         }
@@ -375,7 +373,7 @@
 </head>
 <body>
 
-    <!-- Header Navigation Matching Desktop View Style -->
+    <!-- Header Navigation Section -->
     <header>
         <a href="#" class="logo">Formatice<br>global</a>
         <nav class="nav-menu">
@@ -389,7 +387,7 @@
 
     <div class="container">
         
-        <!-- Hero Section with Premium Content from your Pamphlet -->
+        <!-- Hero Section -->
         <div class="hero-block">
             <h1>Engineering Reality</h1>
             <p class="subtitle">
@@ -449,7 +447,7 @@
             </p>
         </section>
 
-        <!-- Middle Contact Block -->
+        <!-- Contact Block -->
         <section id="contact">
             <h2>Partner With Us</h2>
             <p class="section-tagline">Based in Mumbai, supporting high-precision engineering projects globally[span_11](start_span)[span_11](end_span).</p>
@@ -506,7 +504,6 @@
     </footer>
 
     <!-- FLOATING WHATSAPP CHAT MODULE -->
-    <!-- Simply change the '7758008068' value inside the link below if your primary messaging phone changes -->
     <a href="https://wa.me/917758008068?text=Hello%20Formatice%20Global,%20I%20saw%20your%20website%20and%20have%20an%20engineering%20project%20I%20would%20like%20to%20discuss." target="_blank" class="whatsapp-widget" title="Chat on WhatsApp">
         <div class="whatsapp-label">Chat with an Engineer</div>
         <div class="whatsapp-icon-bg">
