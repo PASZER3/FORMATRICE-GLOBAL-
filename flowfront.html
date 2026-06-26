@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlowFront — Mold Flow Estimator | Formatrice Global</title>
+<meta name="description" content="A free simplified mold-fill screening tool from Formatrice Global. Paint a cavity, set your process, see where it fills last.">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --bg:#0B0E13; --panel:#12161D; --panel2:#212B36; --border:#1F2630;
+    --text:#E7ECF2; --muted:#8B97A6; --muted2:#5A6472;
+    --accent:#34D6C4; --warn:#F4A93B; --danger:#EF5A5A;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:'Inter', ui-sans-serif, system-ui, sans-serif; }
+  .wrap{ max-width:720px; margin:0 auto; padding:24px 16px 60px; }
+
+  header h1{ font-family:'Space Grotesk', sans-serif; font-size:26px; font-weight:700; margin:0; letter-spacing:-0.01em; display:inline; }
+  .badge{ font-size:11px; padding:3px 8px; border-radius:999px; background:#1B2430; color:var(--muted); font-family:'JetBrains Mono', monospace; margin-left:10px; vertical-align:middle; }
+  .subtitle{ color:var(--muted); font-size:14px; margin:6px 0 0; line-height:1.5; }
+
+  .tabs{ display:flex; gap:6px; margin:18px 0 16px; background:var(--panel); padding:4px; border-radius:10px; border:1px solid var(--border); }
+  .tab-btn{ flex:1; padding:8px 0; border-radius:8px; border:none; cursor:pointer; background:transparent; color:var(--muted); font-weight:600; font-size:13px; text-transform:capitalize; font-family:inherit; }
+  .tab-btn.active{ background:var(--panel2); color:var(--text); }
+
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  .chip-row{ display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; margin-bottom:10px; }
+  .chip{ padding:7px 12px; border-radius:999px; border:1px solid var(--border); background:var(--panel); color:#C5CDD6; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; flex-shrink:0; font-family:inherit; }
+  .chip:hover{ border-color:var(--accent); }
+
+  .tool-row{ display:flex; gap:8px; margin-bottom:10px; }
+  .tool-btn{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 0; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--muted); cursor:pointer; font-family:inherit; }
+  .tool-btn span{ font-size:11px; font-weight:600; }
+  .tool-btn.active{ border-color:var(--accent); background:rgba(52,214,196,0.12); color:var(--accent); }
+
+  canvas{ width:100%; height:auto; touch-action:none; display:block; border-radius:10px; border:1px solid var(--border); background:var(--bg); }
+
+  .hint{ font-size:12px; color:var(--muted); margin-top:8px; line-height:1.5; }
+  .footprint{ font-size:12px; color:var(--muted2); margin-top:8px; }
+
+  .row-end{ display:flex; gap:10px; margin-top:12px; align-items:flex-end; }
+  .row-end .grow{ margin-left:auto; }
+  .cellsize-field{ width:120px; }
+
+  label.field-label{ display:block; font-size:12px; color:var(--muted); margin-bottom:5px; font-weight:600; }
+  input[type=number], select{ width:100%; padding:9px 10px; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); font-family:'JetBrains Mono', monospace; font-size:14px; }
+  select{ font-family:'Inter', sans-serif; }
+  input[type=range]{ accent-color:var(--accent); width:100%; }
+
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .stack{ display:flex; flex-direction:column; gap:14px; }
+
+  .run-btn{ margin-top:6px; padding:12px 0; border-radius:10px; border:none; cursor:pointer; background:var(--accent); color:#08120F; font-weight:700; font-size:15px; width:100%; font-family:inherit; }
+  .run-btn:hover{ filter:brightness(1.05); }
+  .error-text{ color:var(--danger); font-size:13px; }
+
+  .icon-btn{ width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); cursor:pointer; flex-shrink:0; }
+
+  .legend-row{ display:flex; align-items:center; gap:8px; margin:8px 0 4px; }
+  .legend-row span{ font-size:11px; color:var(--muted); }
+  .legend-bar{ flex:1; height:8px; border-radius:4px; background:linear-gradient(90deg, rgb(37,99,235), rgb(6,182,212), rgb(250,204,21), rgb(239,68,68)); }
+
+  .scrub-row{ display:flex; align-items:center; gap:10px; margin-top:10px; }
+  .scrub-time{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--muted); min-width:84px; text-align:right; }
+
+  .metric-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:18px; }
+  .metric-card{ padding:12px 14px; border-radius:10px; background:var(--panel); border:1px solid var(--border); }
+  .metric-label{ font-size:11px; color:var(--muted); margin-bottom:4px; }
+  .metric-value{ font-family:'JetBrains Mono', monospace; font-size:18px; font-weight:600; color:var(--text); }
+
+  .warning{ display:flex; gap:8px; padding:10px 12px; border-radius:8px; background:rgba(244,169,59,0.1); border:1px solid rgba(244,169,59,0.3); margin-bottom:8px; }
+  .warning svg{ color:var(--warn); flex-shrink:0; margin-top:1px; }
+  .warning span{ font-size:13px; color:var(--text); line-height:1.4; }
+
+  .empty-state{ text-align:center; padding:48px 16px; color:var(--muted); }
+  .empty-state svg{ opacity:0.6; margin-bottom:10px; }
+  .empty-state p{ font-size:14px; margin:0; }
+
+  details{ margin-top:18px; font-size:12px; color:var(--muted); }
+  summary{ cursor:pointer; font-weight:600; }
+  details p{ margin-top:8px; line-height:1.6; }
+
+  footer{ margin-top:48px; padding-top:20px; border-top:1px solid var(--border); font-size:13px; color:var(--muted); text-align:center; }
+  footer a{ color:var(--accent); text-decoration:none; font-weight:600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>FlowFront</h1><span class="badge">estimate tool — not 3D CAE</span>
+    <p class="subtitle">Paint a cavity, set the gate and process, see where it fills last.</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="design">Design</button>
+    <button class="tab-btn" data-tab="process">Process</button>
+    <button class="tab-btn" data-tab="results">Results</button>
+  </nav>
+
+  <section id="tab-design" class="tab-panel active">
+    <div class="chip-row">
+      <button class="chip" data-preset="plate">Flat plate</button>
+      <button class="chip" data-preset="hole">Plate + hole</button>
+      <button class="chip" data-preset="lbracket">L-bracket</button>
+      <button class="chip" data-preset="uchannel">U-channel (2 gates)</button>
+    </div>
+    <div class="tool-row">
+      <button class="tool-btn active" data-mode="draw"></button>
+      <button class="tool-btn" data-mode="erase"></button>
+      <button class="tool-btn" data-mode="gate"></button>
+    </div>
+    <canvas id="designCanvas"></canvas>
+    <p class="hint" id="drawHint">Drag to paint the cavity shape.</p>
+    <div class="row-end">
+      <div class="cellsize-field">
+        <label class="field-label">Cell size (mm)</label>
+        <input type="number" id="cellSize" min="0.5" step="0.5">
+      </div>
+      <button class="chip grow" id="clearBtn">Clear all</button>
+    </div>
+    <p class="footprint" id="footprint"></p>
+  </section>
+
+  <section id="tab-process" class="tab-panel">
+    <div class="stack">
+      <div>
+        <label class="field-label">Material</label>
+        <select id="materialSelect"></select>
+      </div>
+
+      <div class="grid2" id="customFields" style="display:none;">
+        <div><label class="field-label">Density (kg/m³)</label><input type="number" id="custDensity"></div>
+        <div><label class="field-label">Thermal cond. k (W/m·K)</label><input type="number" id="custK" step="0.01"></div>
+        <div><label class="field-label">Specific heat Cp (J/kg·K)</label><input type="number" id="custCp"></div>
+        <div><label class="field-label">Viscosity μ₀ (Pa·s @100 1/s)</label><input type="number" id="custMu0"></div>
+        <div><label class="field-label">Power-law index n</label><input type="number" id="custN" step="0.05"></div>
+      </div>
+
+      <div class="grid2">
+        <div><label class="field-label">Melt temperature (°C)</label><input type="number" id="meltTemp"></div>
+        <div><label class="field-label">Mold temperature (°C)</label><input type="number" id="moldTemp"></div>
+        <div><label class="field-label">Eject temperature (°C)</label><input type="number" id="ejectTemp"></div>
+        <div><label class="field-label">Wall thickness (mm)</label><input type="number" id="thickness" step="0.1"></div>
+        <div><label class="field-label">Target fill time (s)</label><input type="number" id="fillTime" step="0.1"></div>
+        <div><label class="field-label">Pack / hold time (s)</label><input type="number" id="holdTime" step="0.5"></div>
+        <div><label class="field-label">Mold open + eject (s)</label><input type="number" id="ejectTime" step="0.5"></div>
+      </div>
+
+      <p class="error-text" id="errorText" style="display:none;"></p>
+      <button class="run-btn" id="runBtn">Run simulation</button>
+    </div>
+  </section>
+
+  <section id="tab-results" class="tab-panel">
+    <div id="resultsEmpty" class="empty-state">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      <p>Set up the cavity and process, then run a simulation to see the fill pattern and estimates here.</p>
+    </div>
+    <div id="resultsBody" style="display:none;">
+      <canvas id="resultCanvas"></canvas>
+      <div class="legend-row">
+        <span>Fast</span><div class="legend-bar"></div><span>Slow</span>
+      </div>
+      <div class="scrub-row">
+        <button class="icon-btn" id="playBtn"><span id="playIcon"></span></button>
+        <button class="icon-btn" id="resetBtn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 2.64-6.36"/><path d="M3 3v6h6"/></svg>
+        </button>
+        <input type="range" id="scrubSlider" min="0" max="1" step="0.01" value="0">
+        <span class="scrub-time" id="scrubLabel">0.00/0.00s</span>
+      </div>
+      <div class="metric-grid" id="metricGrid"></div>
+      <div id="warningsBox" style="margin-top:16px;"></div>
+      <details>
+        <summary>What this estimate doesn't capture</summary>
+        <p>Assumes uniform wall thickness, a single flat cavity plane, and isothermal flow. It doesn't model ribs, thickness transitions, true 3D melt-front cooling, packing/shrinkage, or warpage. Use it to screen gate placement and flag obvious problem zones — confirm anything critical in real CAE software (Moldex3D, Moldflow) before cutting steel.</p>
+      </details>
+    </div>
+  </section>
+
+  <footer>
+    A free tool by <a href="mailto:formatriceglobal@gmail.com">Formatrice Global</a> — engineering, CAD design &amp; injection mould services. Need a full 3D simulation or DFM review on a real part? Get in touch.
+  </footer>
+
+</div>
+
+<script>
+// ---------- constants ----------
+var COLS = 44, ROWS = 28, CELL_PX = 12;
+
+var MATERIALS = {
+  PP:   { label:'PP — Polypropylene',   meltDefault:240, moldDefault:40, ejectDefault:90,  density:905,  k:0.17, cp:2000, mu0:180, refShear:100, n:0.35 },
+  ABS:  { label:'ABS',                  meltDefault:240, moldDefault:60, ejectDefault:95,  density:1050, k:0.19, cp:1800, mu0:280, refShear:100, n:0.30 },
+  PA66: { label:'PA66 — Nylon',         meltDefault:280, moldDefault:80, ejectDefault:140, density:1140, k:0.25, cp:2300, mu0:130, refShear:100, n:0.40 },
+  PC:   { label:'PC — Polycarbonate',   meltDefault:300, moldDefault:90, ejectDefault:130, density:1200, k:0.20, cp:1200, mu0:320, refShear:100, n:0.80 },
+  HDPE: { label:'HDPE',                 meltDefault:230, moldDefault:40, ejectDefault:80,  density:950,  k:0.20, cp:2300, mu0:160, refShear:100, n:0.40 },
+  POM:  { label:'POM — Acetal',         meltDefault:205, moldDefault:80, ejectDefault:110, density:1410, k:0.23, cp:1500, mu0:150, refShear:100, n:0.50 },
+  Custom:{ label:'Custom material',     meltDefault:240, moldDefault:50, ejectDefault:100, density:1000, k:0.20, cp:1800, mu0:200, refShear:100, n:0.40 }
+};
+
+var STOPS = [
+  [0.00, [37,99,235]],
+  [0.35, [6,182,212]],
+  [0.65, [250,204,21]],
+  [1.00, [239,68,68]]
+];
+function fillColor(t){
+  for(var i=0;i<STOPS.length-1;i++){
+    var t0=STOPS[i][0], c0=STOPS[i][1], t1=STOPS[i+1][0], c1=STOPS[i+1][1];
+    if(t>=t0 && t<=t1){
+      var f=(t-t0)/(t1-t0);
+      var r=Math.round(c0[0]+f*(c1[0]-c0[0]));
+      var g=Math.round(c0[1]+f*(c1[1]-c0[1]));
+      var b=Math.round(c0[2]+f*(c1[2]-c0[2]));
+      return 'rgb('+r+','+g+','+b+')';
+    }
+  }
+  var last = STOPS[STOPS.length-1][1];
+  return 'rgb('+last[0]+','+last[1]+','+last[2]+')';
+}
+
+// ---------- icons ----------
+var ICONS = {
+  pencil:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>',
+  eraser:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>',
+  target:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>',
+  play:'<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>',
+  pause:'<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>',
+  warn:'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>'
+};
+
+// ---------- presets ----------
+function presetFlatPlate(){
+  var g = new Uint8Array(COLS*ROWS), margin=4;
+  for(var r=margin;r<ROWS-margin;r++) for(var c=margin;c<COLS-margin;c++) g[r*COLS+c]=1;
+  return g;
+}
+function presetPlateWithHole(){
+  var g = presetFlatPlate();
+  var cr=Math.floor(ROWS/2), cc=Math.floor(COLS/2), rad=5;
+  for(var r=0;r<ROWS;r++) for(var c=0;c<COLS;c++){
+    if((r-cr)*(r-cr)+(c-cc)*(c-cc) < rad*rad) g[r*COLS+c]=0;
+  }
+  return g;
+}
+function presetLBracket(){
+  var g = new Uint8Array(COLS*ROWS), margin=4;
+  for(var r=margin;r<ROWS-margin;r++) for(var c=margin;c<margin+10;c++) g[r*COLS+c]=1;
+  for(var r2=ROWS-margin-10;r2<ROWS-margin;r2++) for(var c2=margin;c2<COLS-margin;c2++) g[r2*COLS+c2]=1;
+  return g;
+}
+function presetUChannel(){
+  var g = presetFlatPlate();
+  var cutTop=7, cutBottom=18, cutLeft=15, cutRight=29;
+  for(var r=cutTop;r<cutBottom;r++) for(var c=cutLeft;c<cutRight;c++) g[r*COLS+c]=0;
+  return g;
+}
+
+// ---------- flow-front math ----------
+function computeDistanceField(isPart, gates, cellSizeMM){
+  var n = COLS*ROWS;
+  var dist = new Float64Array(n).fill(Infinity);
+  var source = new Int16Array(n).fill(-1);
+  var visited = new Uint8Array(n);
+  gates.forEach(function(gt, idx){
+    var i = gt.r*COLS+gt.c;
+    if(isPart[i]){ dist[i]=0; source[i]=idx; }
+  });
+  var NB = [[-1,0,1],[1,0,1],[0,-1,1],[0,1,1],[-1,-1,Math.SQRT2],[-1,1,Math.SQRT2],[1,-1,Math.SQRT2],[1,1,Math.SQRT2]];
+  for(var iter=0; iter<n; iter++){
+    var u=-1, best=Infinity;
+    for(var i2=0;i2<n;i2++){
+      if(!visited[i2] && isPart[i2] && dist[i2]<best){ best=dist[i2]; u=i2; }
+    }
+    if(u===-1) break;
+    visited[u]=1;
+    var ur=Math.floor(u/COLS), uc=u%COLS;
+    for(var k=0;k<NB.length;k++){
+      var dr=NB[k][0], dc=NB[k][1], w=NB[k][2];
+      var nr=ur+dr, nc=uc+dc;
+      if(nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
+      var v=nr*COLS+nc;
+      if(!isPart[v] || visited[v]) continue;
+      var nd = dist[u] + w*cellSizeMM;
+      if(nd < dist[v]){ dist[v]=nd; source[v]=source[u]; }
+    }
+  }
+  return { dist:dist, source:source };
+}
+function findAirTraps(isPart, dist){
+  var n = isPart.length, maxD = 0;
+  for(var i=0;i<n;i++) if(isPart[i] && dist[i]<Infinity) maxD = Math.max(maxD, dist[i]);
+  var traps = [];
+  for(var i2=0;i2<n;i2++){
+    if(!isPart[i2] || dist[i2]===Infinity || dist[i2] < 0.9*maxD) continue;
+    var r=Math.floor(i2/COLS), c=i2%COLS;
+    var isMax = true;
+    var nbrs=[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+    for(var k=0;k<nbrs.length;k++){
+      var nr=r+nbrs[k][0], nc=c+nbrs[k][1];
+      if(nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
+      var j = nr*COLS+nc;
+      if(isPart[j] && dist[j] > dist[i2]){ isMax=false; break; }
+    }
+    if(isMax) traps.push(i2);
+  }
+  return traps;
+}
+function findWeldLines(isPart, source, gateCount){
+  if(gateCount < 2) return [];
+  var welds = {};
+  for(var i=0;i<isPart.length;i++){
+    if(!isPart[i] || source[i] < 0) continue;
+    var r=Math.floor(i/COLS), c=i%COLS;
+    var nbrs=[[1,0],[0,1],[1,1],[1,-1]];
+    for(var k=0;k<nbrs.length;k++){
+      var nr=r+nbrs[k][0], nc=c+nbrs[k][1];
+      if(nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
+      var j = nr*COLS+nc;
+      if(isPart[j] && source[j]>=0 && source[j]!==source[i]){ welds[i]=true; welds[j]=true; }
+    }
+  }
+  return Object.keys(welds).map(Number);
+}
+
+// ---------- state ----------
+var state = {
+  grid: presetFlatPlate(),
+  gates: [{r:14,c:4}],
+  mode: 'draw',
+  cellSizeMM: 3,
+  materialKey: 'PP',
+  customMat: { density:1000, k:0.2, cp:1800, mu0:200, refShear:100, n:0.4 },
+  proc: { thickness:2.5, fillTime:1.5, holdTime:4, ejectTime:6,
+          meltTemp:MATERIALS.PP.meltDefault, moldTemp:MATERIALS.PP.moldDefault, ejectTemp:MATERIALS.PP.ejectDefault },
+  results: null,
+  scrubTime: 0,
+  playing: false,
+  rafId: null,
+  drawing: false
+};
+
+// ---------- design canvas ----------
+function renderDesignCanvas(){
+  var canvas = document.getElementById('designCanvas');
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#0B0E13';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  for(var r=0;r<ROWS;r++){
+    for(var c=0;c<COLS;c++){
+      if(state.grid[r*COLS+c]){
+        ctx.fillStyle = '#212B36';
+        ctx.fillRect(c*CELL_PX, r*CELL_PX, CELL_PX-1, CELL_PX-1);
+      }
+    }
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  for(var c2=0;c2<=COLS;c2++){ ctx.beginPath(); ctx.moveTo(c2*CELL_PX,0); ctx.lineTo(c2*CELL_PX,ROWS*CELL_PX); ctx.stroke(); }
+  for(var r2=0;r2<=ROWS;r2++){ ctx.beginPath(); ctx.moveTo(0,r2*CELL_PX); ctx.lineTo(COLS*CELL_PX,r2*CELL_PX); ctx.stroke(); }
+  state.gates.forEach(function(g,i){
+    var cx=g.c*CELL_PX+CELL_PX/2, cy=g.r*CELL_PX+CELL_PX/2;
+    ctx.beginPath(); ctx.arc(cx,cy,CELL_PX*0.9,0,Math.PI*2); ctx.fillStyle='#34D6C4'; ctx.fill();
+    ctx.fillStyle='#0B0E13'; ctx.font='bold '+CELL_PX+'px monospace'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(String(i+1), cx, cy+1);
+  });
+}
+
+function cellFromEvent(e, canvas){
+  var rect = canvas.getBoundingClientRect();
+  var x = (e.clientX-rect.left)/rect.width*canvas.width;
+  var y = (e.clientY-rect.top)/rect.height*canvas.height;
+  return {
+    r: Math.min(ROWS-1, Math.max(0, Math.floor(y/CELL_PX))),
+    c: Math.min(COLS-1, Math.max(0, Math.floor(x/CELL_PX)))
+  };
+}
+function paintAt(r,c){
+  if(r<0||r>=ROWS||c<0||c>=COLS) return;
+  var idx = r*COLS+c;
+  if(state.mode==='gate'){
+    if(!state.grid[idx]) return;
+    var existsIdx=-1;
+    for(var i=0;i<state.gates.length;i++) if(state.gates[i].r===r && state.gates[i].c===c) existsIdx=i;
+    if(existsIdx>=0) state.gates.splice(existsIdx,1);
+    else if(state.gates.length<4) state.gates.push({r:r,c:c});
+    renderDesignCanvas();
+    return;
+  }
+  state.grid[idx] = state.mode==='draw' ? 1 : 0;
+  if(state.mode==='erase'){
+    state.gates = state.gates.filter(function(g){ return !(g.r===r && g.c===c); });
+  }
+  renderDesignCanvas();
+}
+
+// ---------- result canvas ----------
+function renderResultCanvas(){
+  if(!state.results) return;
+  var canvas = document.getElementById('resultCanvas');
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#0B0E13';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  var field = state.results.field;
+  var dist = field.dist, isPart = field.isPart, maxDist = field.maxDist, weldSet = field.weldSet, trapSet = field.trapSet;
+  var threshold = state.results.fillTime>0 ? state.scrubTime*(maxDist/state.results.fillTime) : maxDist;
+  for(var r=0;r<ROWS;r++){
+    for(var c=0;c<COLS;c++){
+      var idx = r*COLS+c;
+      if(!isPart[idx]) continue;
+      var d = dist[idx];
+      var color = '#161B22';
+      var revealed = d!==Infinity && d<=threshold+1e-9;
+      if(revealed){
+        var t = maxDist>0 ? d/maxDist : 0;
+        color = fillColor(t);
+      }
+      ctx.fillStyle = color;
+      ctx.fillRect(c*CELL_PX, r*CELL_PX, CELL_PX-1, CELL_PX-1);
+      if(revealed){
+        if(weldSet[idx]){
+          ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(c*CELL_PX+1, r*CELL_PX+1, CELL_PX-3, CELL_PX-3);
+        }
+        if(trapSet[idx]){
+          ctx.beginPath();
+          ctx.arc(c*CELL_PX+CELL_PX/2, r*CELL_PX+CELL_PX/2, CELL_PX*0.3, 0, Math.PI*2);
+          ctx.fillStyle = '#F4A93B';
+          ctx.fill();
+        }
+      }
+    }
+  }
+  state.results.gates.forEach(function(g){
+    var cx=g.c*CELL_PX+CELL_PX/2, cy=g.r*CELL_PX+CELL_PX/2;
+    ctx.beginPath(); ctx.arc(cx,cy,CELL_PX*0.55,0,Math.PI*2); ctx.fillStyle='#0B0E13'; ctx.fill();
+    ctx.lineWidth=2; ctx.strokeStyle='#FFFFFF'; ctx.stroke();
+  });
+}
+
+// ---------- simulation ----------
+function runSimulation(){
+  var isPart = state.grid;
+  var partCount = 0;
+  for(var i=0;i<isPart.length;i++) partCount += isPart[i];
+  var errEl = document.getElementById('errorText');
+  if(partCount===0){ errEl.textContent='Paint a cavity shape first.'; errEl.style.display='block'; return; }
+  if(state.gates.length===0){ errEl.textContent='Place at least one gate.'; errEl.style.display='block'; return; }
+  errEl.style.display='none';
+
+  var fieldRaw = computeDistanceField(isPart, state.gates, state.cellSizeMM);
+  var dist = fieldRaw.dist, source = fieldRaw.source;
+  var maxDist = 0;
+  for(var i2=0;i2<dist.length;i2++) if(isPart[i2] && dist[i2]<Infinity && dist[i2]>maxDist) maxDist = dist[i2];
+
+  var trapsArr = findAirTraps(isPart, dist);
+  var weldsArr = findWeldLines(isPart, source, state.gates.length);
+  var weldSet = {}; weldsArr.forEach(function(i){ weldSet[i]=true; });
+  var trapSet = {}; trapsArr.forEach(function(i){ trapSet[i]=true; });
+
+  var matProps = state.materialKey==='Custom' ? state.customMat : MATERIALS[state.materialKey];
+  var areaCell_m2 = Math.pow(state.cellSizeMM/1000, 2);
+  var thickness_m = state.proc.thickness/1000;
+  var volume_m3 = partCount*areaCell_m2*thickness_m;
+  var fillTime_s = Math.max(state.proc.fillTime, 0.01);
+  var Q = volume_m3/fillTime_s;
+  var L_m = Math.max(maxDist, state.cellSizeMM)/1000;
+  var W_eff_m = volume_m3/(L_m*thickness_m);
+  var shearRate = 6*Q/(W_eff_m*thickness_m*thickness_m);
+  var muEff = matProps.mu0*Math.pow(Math.max(shearRate,1)/matProps.refShear, matProps.n-1);
+  var deltaP_Pa = 12*muEff*Q*L_m/(W_eff_m*Math.pow(thickness_m,3));
+  var deltaP_bar = deltaP_Pa/1e5;
+  var projectedArea_m2 = partCount*areaCell_m2;
+  var clampForce_tonnes = (deltaP_Pa*0.5*projectedArea_m2)/9810;
+
+  var alpha = matProps.k/(matProps.density*matProps.cp);
+  var coolingTime_s = null;
+  var ratio = (4/Math.PI)*(state.proc.meltTemp-state.proc.moldTemp)/(state.proc.ejectTemp-state.proc.moldTemp);
+  if(state.proc.meltTemp>state.proc.moldTemp && state.proc.ejectTemp>state.proc.moldTemp && ratio>1){
+    coolingTime_s = (thickness_m*thickness_m/(Math.PI*Math.PI*alpha))*Math.log(ratio);
+  }
+  var cycleTime_s = coolingTime_s!=null ? fillTime_s+state.proc.holdTime+coolingTime_s+state.proc.ejectTime : null;
+
+  var warnings = [];
+  if(deltaP_bar>1500) warnings.push('Estimated cavity pressure is very high — check machine capacity, enlarge the gate, or allow more fill time.');
+  if(shearRate>100000) warnings.push('Wall shear rate is high — risk of material degradation near the gate or thin sections.');
+  if(Object.keys(weldSet).length>0) warnings.push(state.gates.length+' gates create a weld line — consider relocating gates if it falls on a cosmetic or load-bearing area.');
+  if(Object.keys(trapSet).length>0) warnings.push('Potential air trap location(s) marked on the plot — make sure these areas are vented.');
+  if(coolingTime_s==null) warnings.push('Check that melt temp > mold temp, and eject temp sits between mold and melt temp — cooling time could not be estimated.');
+
+  state.results = {
+    field: { dist:dist, source:source, isPart:isPart, maxDist:maxDist, weldSet:weldSet, trapSet:trapSet },
+    gates: state.gates.slice(),
+    fillTime: fillTime_s,
+    deltaP_bar: deltaP_bar, clampForce_tonnes: clampForce_tonnes, coolingTime_s: coolingTime_s,
+    cycleTime_s: cycleTime_s, shearRate: shearRate, warnings: warnings
+  };
+  state.scrubTime = 0;
+  stopPlaying();
+  switchTab('results');
+  renderResultsPanel();
+}
+
+function renderResultsPanel(){
+  var empty = document.getElementById('resultsEmpty');
+  var body = document.getElementById('resultsBody');
+  if(!state.results){ empty.style.display='block'; body.style.display='none'; return; }
+  empty.style.display='none'; body.style.display='block';
+
+  var slider = document.getElementById('scrubSlider');
+  slider.max = state.results.fillTime;
+  slider.value = state.scrubTime;
+  document.getElementById('playIcon').innerHTML = ICONS.play;
+  updateScrubLabel();
+  renderResultCanvas();
+
+  function metricCard(label, value){
+    return '<div class="metric-card"><div class="metric-label">'+label+'</div><div class="metric-value">'+value+'</div></div>';
+  }
+  var r = state.results;
+  var grid = '';
+  grid += metricCard('Fill time', r.fillTime.toFixed(2)+' s');
+  grid += metricCard('Cavity pressure (est.)', isFinite(r.deltaP_bar) ? r.deltaP_bar.toFixed(0)+' bar' : '—');
+  grid += metricCard('Clamp force (est.)', isFinite(r.clampForce_tonnes) ? r.clampForce_tonnes.toFixed(1)+' t' : '—');
+  grid += metricCard('Max wall shear rate', r.shearRate.toFixed(0)+' 1/s');
+  grid += metricCard('Cooling time (est.)', r.coolingTime_s!=null ? r.coolingTime_s.toFixed(1)+' s' : '—');
+  grid += metricCard('Cycle time (est.)', r.cycleTime_s!=null ? r.cycleTime_s.toFixed(1)+' s' : '—');
+  document.getElementById('metricGrid').innerHTML = grid;
+
+  var warnBox = document.getElementById('warningsBox');
+  if(r.warnings.length>0){
+    warnBox.innerHTML = r.warnings.map(function(w){
+      return '<div class="warning">'+ICONS.warn+'<span>'+w+'</span></div>';
+    }).join('');
+  } else {
+    warnBox.innerHTML = '';
+  }
+}
+function updateScrubLabel(){
+  if(!state.results) return;
+  document.getElementById('scrubLabel').textContent = state.scrubTime.toFixed(2)+'/'+state.results.fillTime.toFixed(2)+'s';
+}
+
+// ---------- playback ----------
+function startPlaying(){
+  if(!state.results) return;
+  state.playing = true;
+  document.getElementById('playIcon').innerHTML = ICONS.pause;
+  var startTime = performance.now();
+  var startScrub = state.scrubTime;
+  var remainingFrac = state.results.fillTime>0 ? (state.results.fillTime-startScrub)/state.results.fillTime : 1;
+  var duration = Math.max(4000*remainingFrac, 50);
+  function tick(now){
+    var frac = Math.min((now-startTime)/duration, 1);
+    state.scrubTime = startScrub + frac*(state.results.fillTime-startScrub);
+    renderResultCanvas();
+    updateScrubLabel();
+    document.getElementById('scrubSlider').value = state.scrubTime;
+    if(frac<1 && state.playing){ state.rafId = requestAnimationFrame(tick); }
+    else { stopPlaying(); }
+  }
+  state.rafId = requestAnimationFrame(tick);
+}
+function stopPlaying(){
+  state.playing = false;
+  document.getElementById('playIcon').innerHTML = ICONS.play;
+  if(state.rafId) cancelAnimationFrame(state.rafId);
+}
+
+// ---------- tabs / UI wiring ----------
+function switchTab(name){
+  var btns = document.querySelectorAll('.tab-btn');
+  for(var i=0;i<btns.length;i++) btns[i].classList.toggle('active', btns[i].dataset.tab===name);
+  var panels = document.querySelectorAll('.tab-panel');
+  for(var j=0;j<panels.length;j++) panels[j].classList.toggle('active', panels[j].id==='tab-'+name);
+  if(name==='design') renderDesignCanvas();
+  if(name==='results') renderResultsPanel();
+}
+function updateHint(){
+  var hint = document.getElementById('drawHint');
+  hint.textContent = state.mode==='gate' ? 'Tap a cell on the cavity to place an injection gate (up to 4). Tap again to remove.' :
+                      state.mode==='draw' ? 'Drag to paint the cavity shape.' : 'Drag to erase part of the cavity.';
+}
+function updateFootprint(){
+  document.getElementById('footprint').textContent =
+    'Cavity footprint ≈ '+(COLS*state.cellSizeMM).toFixed(0)+' × '+(ROWS*state.cellSizeMM).toFixed(0)+' mm';
+}
+function applyPreset(key){
+  if(key==='plate'){ state.grid=presetFlatPlate(); state.gates=[{r:14,c:4}]; }
+  else if(key==='hole'){ state.grid=presetPlateWithHole(); state.gates=[{r:14,c:4}]; }
+  else if(key==='lbracket'){ state.grid=presetLBracket(); state.gates=[{r:5,c:8}]; }
+  else { state.grid=presetUChannel(); state.gates=[{r:7,c:14},{r:7,c:30}]; }
+  state.results = null;
+  renderDesignCanvas();
+}
+
+function init(){
+  // canvas sizing
+  var dCanvas = document.getElementById('designCanvas');
+  dCanvas.width = COLS*CELL_PX; dCanvas.height = ROWS*CELL_PX;
+  var rCanvas = document.getElementById('resultCanvas');
+  rCanvas.width = COLS*CELL_PX; rCanvas.height = ROWS*CELL_PX;
+
+  // tool icons + labels
+  var toolMeta = { draw:['pencil','Draw'], erase:['eraser','Erase'], gate:['target','Gate'] };
+  var toolBtns = document.querySelectorAll('.tool-btn');
+  for(var i=0;i<toolBtns.length;i++){
+    var mkey = toolBtns[i].dataset.mode;
+    toolBtns[i].innerHTML = ICONS[toolMeta[mkey][0]] + '<span>' + toolMeta[mkey][1] + '</span>';
+  }
+
+  // tabs
+  var tabBtns = document.querySelectorAll('.tab-btn');
+  for(var t=0;t<tabBtns.length;t++){
+    tabBtns[t].addEventListener('click', function(e){ switchTab(e.currentTarget.dataset.tab); });
+  }
+
+  // presets
+  var presetBtns = document.querySelectorAll('.chip[data-preset]');
+  for(var p=0;p<presetBtns.length;p++){
+    presetBtns[p].addEventListener('click', function(e){ applyPreset(e.currentTarget.dataset.preset); });
+  }
+
+  // tool buttons
+  for(var b=0;b<toolBtns.length;b++){
+    toolBtns[b].addEventListener('click', function(e){
+      state.mode = e.currentTarget.dataset.mode;
+      var all = document.querySelectorAll('.tool-btn');
+      for(var x=0;x<all.length;x++) all[x].classList.toggle('active', all[x].dataset.mode===state.mode);
+      updateHint();
+    });
+  }
+
+  // clear
+  document.getElementById('clearBtn').addEventListener('click', function(){
+    state.grid = new Uint8Array(COLS*ROWS);
+    state.gates = [];
+    state.results = null;
+    renderDesignCanvas();
+  });
+
+  // cell size
+  var cellSizeEl = document.getElementById('cellSize');
+  cellSizeEl.value = state.cellSizeMM;
+  cellSizeEl.addEventListener('input', function(e){
+    var v = e.target.valueAsNumber;
+    if(!Number.isNaN(v) && v>0){ state.cellSizeMM=v; updateFootprint(); }
+  });
+  updateFootprint();
+
+  // design canvas pointer events
+  var drawing = false;
+  dCanvas.addEventListener('pointerdown', function(e){ e.preventDefault(); drawing=true; var rc=cellFromEvent(e,dCanvas); paintAt(rc.r,rc.c); });
+  dCanvas.addEventListener('pointermove', function(e){ if(!drawing||state.mode==='gate') return; e.preventDefault(); var rc=cellFromEvent(e,dCanvas); paintAt(rc.r,rc.c); });
+  ['pointerup','pointerleave','pointercancel'].forEach(function(evt){ dCanvas.addEventListener(evt, function(){ drawing=false; }); });
+
+  // material select
+  var matSel = document.getElementById('materialSelect');
+  Object.keys(MATERIALS).forEach(function(key){
+    var opt = document.createElement('option');
+    opt.value = key; opt.textContent = MATERIALS[key].label;
+    if(key===state.materialKey) opt.selected = true;
+    matSel.appendChild(opt);
+  });
+  matSel.addEventListener('change', function(e){
+    state.materialKey = e.target.value;
+    document.getElementById('customFields').style.display = state.materialKey==='Custom' ? 'grid' : 'none';
+    if(state.materialKey!=='Custom'){
+      var m = MATERIALS[state.materialKey];
+      state.proc.meltTemp=m.meltDefault; state.proc.moldTemp=m.moldDefault; state.proc.ejectTemp=m.ejectDefault;
+      document.getElementById('meltTemp').value=m.meltDefault;
+      document.getElementById('moldTemp').value=m.moldDefault;
+      document.getElementById('ejectTemp').value=m.ejectDefault;
+    }
+  });
+
+  // numeric field binder
+  function bindNum(id, setter, initial){
+    var el = document.getElementById(id);
+    el.value = initial;
+    el.addEventListener('input', function(e){
+      var v = e.target.valueAsNumber;
+      if(!Number.isNaN(v)) setter(v);
+    });
+  }
+  bindNum('thickness', function(v){ state.proc.thickness=v; }, state.proc.thickness);
+  bindNum('fillTime',  function(v){ state.proc.fillTime=v; },  state.proc.fillTime);
+  bindNum('holdTime',  function(v){ state.proc.holdTime=v; },  state.proc.holdTime);
+  bindNum('ejectTime', function(v){ state.proc.ejectTime=v; }, state.proc.ejectTime);
+  bindNum('meltTemp',  function(v){ state.proc.meltTemp=v; },  state.proc.meltTemp);
+  bindNum('moldTemp',  function(v){ state.proc.moldTemp=v; },  state.proc.moldTemp);
+  bindNum('ejectTemp', function(v){ state.proc.ejectTemp=v; }, state.proc.ejectTemp);
+  bindNum('custDensity', function(v){ state.customMat.density=v; }, state.customMat.density);
+  bindNum('custK',       function(v){ state.customMat.k=v; },       state.customMat.k);
+  bindNum('custCp',      function(v){ state.customMat.cp=v; },      state.customMat.cp);
+  bindNum('custMu0',     function(v){ state.customMat.mu0=v; },     state.customMat.mu0);
+  bindNum('custN',       function(v){ state.customMat.n=v; },       state.customMat.n);
+
+  // run button
+  document.getElementById('runBtn').addEventListener('click', runSimulation);
+
+  // results playback controls
+  document.getElementById('playBtn').addEventListener('click', function(){
+    if(state.playing) stopPlaying(); else startPlaying();
+  });
+  document.getElementById('resetBtn').addEventListener('click', function(){
+    state.scrubTime = 0;
+    stopPlaying();
+    document.getElementById('scrubSlider').value = 0;
+    renderResultCanvas();
+    updateScrubLabel();
+  });
+  document.getElementById('scrubSlider').addEventListener('input', function(e){
+    state.scrubTime = parseFloat(e.target.value);
+    stopPlaying();
+    renderResultCanvas();
+    updateScrubLabel();
+  });
+
+  // initial paint
+  renderDesignCanvas();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
